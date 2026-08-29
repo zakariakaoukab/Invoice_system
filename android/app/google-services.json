@@ -1,0 +1,28 @@
+{
+  "project_info": {
+    "project_number": "430971393600",
+    "project_id": "darbelamri-invoices",
+    "storage_bucket": "darbelamri-invoices.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430971393600:android:ab9d4c6f2483329e5df1a5",
+        "android_client_info": {
+          "package_name": "com.example.darbelamri_invoices"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdebnxtnppNTjd8cUOOHhZVD-LtbLAvDU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
