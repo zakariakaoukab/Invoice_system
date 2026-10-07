@@ -7,6 +7,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../providers/dashboard_provider.dart';
+import '../../ai_assistant/presentation/ai_chat_dialog.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -20,45 +21,62 @@ class DashboardScreen extends ConsumerWidget {
     final topProductsAsync = ref.watch(topProductsProvider);
     final monthlyOrdersAsync = ref.watch(monthlyOrdersProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppConstants.contentPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const PageHeader(
-            title: AppStrings.dashboardTitle,
-            subtitle: 'نظرة عامة على أداء المبيعات',
-          ),
-          const SizedBox(height: 28),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const AiChatDialog(),
+          );
+        },
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.smart_toy_rounded, color: AppColors.onPrimary),
+        label: const Text(
+          'AI Assistant',
+          style: TextStyle(color: AppColors.onPrimary, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppConstants.contentPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PageHeader(
+              title: AppStrings.dashboardTitle,
+              subtitle: 'نظرة عامة على أداء المبيعات',
+            ),
+            const SizedBox(height: 28),
 
-          // KPI Cards
-          monthlyOrdersAsync.when(
-            loading: () => const LoadingWidget(),
-            error: (e, _) => Text('${AppStrings.error}: $e',
-                style: const TextStyle(color: AppColors.error)),
-            data: (_) => _buildKpiCards(monthlySales, orderCount, avgValue),
-          ),
+            // KPI Cards
+            monthlyOrdersAsync.when(
+              loading: () => const LoadingWidget(),
+              error: (e, _) => Text('${AppStrings.error}: $e',
+                  style: const TextStyle(color: AppColors.error)),
+              data: (_) => _buildKpiCards(monthlySales, orderCount, avgValue),
+            ),
 
-          const SizedBox(height: 28),
+            const SizedBox(height: 28),
 
-          // Charts row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Sales chart
-              Expanded(
-                flex: 3,
-                child: _SalesChartCard(chartAsync: chartAsync),
-              ),
-              const SizedBox(width: 16),
-              // Top products
-              Expanded(
-                flex: 2,
-                child: _TopProductsCard(topProductsAsync: topProductsAsync),
-              ),
-            ],
-          ),
-        ],
+            // Charts row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sales chart
+                Expanded(
+                  flex: 3,
+                  child: _SalesChartCard(chartAsync: chartAsync),
+                ),
+                const SizedBox(width: 16),
+                // Top products
+                Expanded(
+                  flex: 2,
+                  child: _TopProductsCard(topProductsAsync: topProductsAsync),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

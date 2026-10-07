@@ -232,6 +232,13 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
           activeIcon: Icons.people_rounded,
           route: AppRoutes.users,
         ),
+      if (widget.isAdmin)
+        const _NavItemData(
+          label: AppStrings.navReports,
+          icon: Icons.analytics_outlined,
+          activeIcon: Icons.analytics_rounded,
+          route: AppRoutes.reports,
+        ),
     ];
   }
 }

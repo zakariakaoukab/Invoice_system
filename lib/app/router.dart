@@ -6,6 +6,7 @@ import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/orders/presentation/order_history_screen.dart';
 import '../features/pos/presentation/pos_screen.dart';
 import '../features/products/presentation/products_screen.dart';
+import '../features/reports/presentation/reports_screen.dart';
 import '../features/setup/presentation/setup_wizard_screen.dart';
 import '../features/users/presentation/users_screen.dart';
 import '../core/widgets/app_scaffold.dart';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const orders = '/orders';
   static const products = '/products';
   static const users = '/users';
+  static const reports = '/reports';
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -58,17 +60,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       // Logged in → redirect away from splash, login, or setup
       if (isLoggedIn && (isSplashRoute || isAuthRoute || isSetupRoute)) {
+        if (currentUser.isLoading) {
+          // If we are loading user profile, show splash
+          return AppRoutes.splash; 
+        }
+        
         final user = currentUser.valueOrNull;
         if (user != null) {
           return user.isAdmin ? AppRoutes.dashboard : AppRoutes.pos;
+        } else {
+          // If user is null but not loading, they don't have a Firestore profile.
+          // This shouldn't happen unless DB is out of sync. Log them out.
+          return AppRoutes.login; // Wait, they are logged in via Auth, but no doc. 
         }
-        return null; // wait for user data
       }
 
       // Admin-only route guard
       final isAdminRoute = state.matchedLocation == AppRoutes.dashboard ||
-          state.matchedLocation == AppRoutes.users;
+          state.matchedLocation == AppRoutes.users ||
+          state.matchedLocation == AppRoutes.reports;
       if (isLoggedIn && isAdminRoute) {
+        if (currentUser.isLoading) return AppRoutes.splash;
         final user = currentUser.valueOrNull;
         if (user != null && !user.isAdmin) {
           return AppRoutes.pos;
@@ -112,6 +124,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.users,
             builder: (ctx, state) => const UsersScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.reports,
+            builder: (ctx, state) => const ReportsScreen(),
           ),
         ],
       ),

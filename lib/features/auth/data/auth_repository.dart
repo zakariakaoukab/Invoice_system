@@ -41,12 +41,27 @@ class AuthRepository {
 
   /// Fetches the AppUser document from Firestore for the given UID.
   Future<AppUser?> fetchUserByUid(String uid) async {
-    final doc = await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(uid)
-        .get();
-    if (!doc.exists) return null;
-    return AppUser.fromFirestore(doc);
+    try {
+      final doc = await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 10));
+      if (!doc.exists) return null;
+      return AppUser.fromFirestore(doc);
+    } catch (e) {
+      // If offline or hanging, we can try to get it from cache
+      try {
+        final doc = await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(uid)
+            .get(const GetOptions(source: Source.cache));
+        if (!doc.exists) return null;
+        return AppUser.fromFirestore(doc);
+      } catch (cacheError) {
+        throw Exception('تعذر الاتصال بالخادم ولم يتم العثور على بيانات محلية.');
+      }
+    }
   }
 
   /// Creates a new user in Firebase Auth and saves their profile to Firestore.
@@ -107,12 +122,26 @@ class AuthRepository {
 
   /// Checks if any admin user document exists in the users collection.
   Future<bool> hasAdminUser() async {
-    final snapshot = await _firestore
-        .collection(AppConstants.usersCollection)
-        .where('role', isEqualTo: AppConstants.roleAdmin)
-        .limit(1)
-        .get();
-    return snapshot.docs.isNotEmpty;
+    try {
+      final snapshot = await _firestore
+          .collection(AppConstants.usersCollection)
+          .where('role', isEqualTo: AppConstants.roleAdmin)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 10));
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      try {
+        final snapshot = await _firestore
+            .collection(AppConstants.usersCollection)
+            .where('role', isEqualTo: AppConstants.roleAdmin)
+            .limit(1)
+            .get(const GetOptions(source: Source.cache));
+        return snapshot.docs.isNotEmpty;
+      } catch (_) {
+        return true; // Default to true so it doesn't force setup offline
+      }
+    }
   }
 
   /// Returns a stream of all user documents (for user management screen).

@@ -10,6 +10,7 @@ import '../../../core/widgets/web_safe_image.dart';
 import '../../../features/auth/providers/auth_provider.dart';
 import '../../../models/product.dart';
 import '../providers/products_provider.dart';
+import '../services/low_stock_service.dart';
 
 class ProductsScreen extends ConsumerWidget {
   const ProductsScreen({super.key});
@@ -53,13 +54,52 @@ class ProductsScreen extends ConsumerWidget {
       title: AppStrings.productsTitle,
       subtitle: 'إدارة قائمة المنتجات والمخزون',
       action: isAdmin
-          ? ElevatedButton.icon(
-              onPressed: () => _showProductForm(context, ref, null),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text(AppStrings.addProduct),
+          ? Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _handleSendRestockEmail(context, ref),
+                  icon: const Icon(Icons.forward_to_inbox_rounded, size: 18),
+                  label: const Text('إرسال طلب إعادة المخزون'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _showProductForm(context, ref, null),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text(AppStrings.addProduct),
+                ),
+              ],
             )
           : null,
     );
+  }
+
+  Future<void> _handleSendRestockEmail(BuildContext context, WidgetRef ref) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('جارٍ حساب المخزون وإرسال البريد...')),
+      );
+
+      final service = ref.read(lowStockServiceProvider);
+      await service.sendRestockEmail();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إرسال تنبيه نقص المخزون بنجاح!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _showProductForm(

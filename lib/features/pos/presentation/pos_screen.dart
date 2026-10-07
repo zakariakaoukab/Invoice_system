@@ -9,9 +9,11 @@ import '../../../features/auth/providers/auth_provider.dart';
 import '../../../features/orders/data/orders_repository.dart';
 import '../../../features/invoice/pdf_invoice_generator.dart';
 import '../../../models/order.dart';
+import '../../../core/providers/sync_provider.dart';
 import '../providers/cart_provider.dart';
 import '../../products/presentation/products_screen.dart';
 import '../../products/providers/products_provider.dart';
+import '../../products/services/low_stock_service.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -45,9 +47,42 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const PageHeader(
+          PageHeader(
             title: AppStrings.posTitle,
             subtitle: 'أضف المنتجات وأتمم الطلب',
+            action: Consumer(builder: (context, ref, _) {
+              final syncState = ref.watch(syncProvider);
+              if (syncState.isOnline && syncState.pendingCount == 0) {
+                return const Icon(Icons.cloud_done, color: AppColors.success);
+              }
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!syncState.isOnline)
+                    const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.cloud_off, color: AppColors.warning, size: 20),
+                        SizedBox(width: 8),
+                        Text('وضع عدم الاتصال', style: TextStyle(color: AppColors.warning)),
+                      ],
+                    ),
+                  if (syncState.pendingCount > 0) ...[
+                    const SizedBox(width: 16),
+                    if (syncState.isSyncing)
+                      const SizedBox(
+                        width: 16, height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      const Icon(Icons.sync_problem, color: AppColors.warning, size: 20),
+                    const SizedBox(width: 8),
+                    Text('${syncState.pendingCount} طلب قيد الانتظار', 
+                         style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ],
+              );
+            }),
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -294,8 +329,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     setState(() => _isSubmitting = true);
     try {
       final currentUser = ref.read(currentAppUserProvider).valueOrNull;
+      final syncState = ref.read(syncProvider);
       final ordersRepo = OrdersRepository();
-      final invoiceId = await ordersRepo.generateInvoiceId();
+      
+      String invoiceId;
+      if (syncState.isOnline) {
+        try {
+          invoiceId = await ordersRepo.generateInvoiceId();
+        } catch (e) {
+          // Fallback if generating ID fails (e.g. suddenly offline)
+          invoiceId = 'OFF-${DateTime.now().millisecondsSinceEpoch}';
+        }
+      } else {
+        invoiceId = 'OFF-${DateTime.now().millisecondsSinceEpoch}';
+      }
 
       final order = Order(
         id: invoiceId,
@@ -313,7 +360,36 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               {'productId': i.product.id, 'quantity': i.quantity})
           .toList();
 
-      await ordersRepo.createOrder(order, stockItems);
+      if (syncState.isOnline && !invoiceId.startsWith('OFF-')) {
+        try {
+          await ordersRepo.createOrder(order, stockItems);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(AppStrings.orderSuccess),
+              backgroundColor: AppColors.success,
+            ));
+          }
+        } catch (e) {
+          // If it fails (e.g., connection dropped), queue it instead
+          await ref.read(offlineQueueProvider).enqueueOrder(order, stockItems);
+          await ref.read(syncProvider.notifier).notifyOrderAdded();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('تم حفظ الطلب محلياً (انقطع الاتصال)'),
+              backgroundColor: AppColors.warning,
+            ));
+          }
+        }
+      } else {
+        await ref.read(offlineQueueProvider).enqueueOrder(order, stockItems);
+        await ref.read(syncProvider.notifier).notifyOrderAdded();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('تم حفظ الطلب محلياً بنجاح (غير متصل)'),
+            backgroundColor: AppColors.warning,
+          ));
+        }
+      }
 
       // ── Order saved successfully ──────────────────────────────────────
       // Clear cart and customer fields BEFORE attempting PDF so the UI
@@ -322,12 +398,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       _customerNameController.clear();
       _customerDetailsController.clear();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(AppStrings.orderSuccess),
-          backgroundColor: AppColors.success,
-        ));
-      }
+      // Trigger automatic low stock check in the background
+      Future.microtask(() {
+        ref.read(lowStockServiceProvider).sendRestockEmail(isAutomatic: true).catchError((_) {});
+      });
 
       // ── Generate and show PDF invoice (non-blocking for the order) ────
       // If PDF printing fails (e.g. no printer on Windows) we show a

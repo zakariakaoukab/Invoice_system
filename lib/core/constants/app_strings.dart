@@ -116,6 +116,21 @@ class AppStrings {
   static const userCreatedSuccess = 'تم إنشاء المستخدم بنجاح';
   static const userCreatedError = 'خطأ في إنشاء المستخدم';
 
+  // Reports
+  static const navReports = 'التقارير';
+  static const reportsTitle = 'التقارير والإحصائيات';
+  static const reportsSubtitle = 'تحليل المبيعات والأداء';
+  static const totalRevenue = 'إجمالي الإيرادات';
+  static const totalOrdersCount = 'إجمالي الطلبات'; // Avoid conflict with totalOrders
+  static const averageOrder = 'متوسط الطلب';
+  static const salesTrend = 'مؤشر المبيعات';
+  static const salesByProduct = 'المبيعات حسب المنتج';
+  static const customDateRange = 'فترة مخصصة';
+  static const last7Days = 'آخر 7 أيام';
+  static const last30Days = 'آخر 30 يوم';
+  static const thisMonth = 'هذا الشهر';
+  static const allTime = 'كل الوقت';
+
   // General
   static const loading = 'جارٍ التحميل...';
   static const error = 'حدث خطأ';

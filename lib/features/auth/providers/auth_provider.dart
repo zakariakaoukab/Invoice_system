@@ -18,15 +18,10 @@ final firebaseAuthStateProvider = StreamProvider<User?>((ref) {
 // ── Current AppUser (with role) ──────────────────────────────────────────────
 
 final currentAppUserProvider = FutureProvider<AppUser?>((ref) async {
-  final authState = ref.watch(firebaseAuthStateProvider);
-  return authState.when(
-    data: (user) async {
-      if (user == null) return null;
-      return ref.read(authRepositoryProvider).fetchUserByUid(user.uid);
-    },
-    loading: () => null,
-    error: (_, __) => null,
-  );
+  // Wait for the auth state to initialize
+  final authState = await ref.watch(firebaseAuthStateProvider.future);
+  if (authState == null) return null;
+  return ref.read(authRepositoryProvider).fetchUserByUid(authState.uid);
 });
 
 // ── Is Admin convenience provider ────────────────────────────────────────────

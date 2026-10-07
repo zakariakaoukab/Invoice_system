@@ -29,33 +29,33 @@ class AppColors {
   AppColors._();
 
   // Backgrounds
-  static const background = Color(0xFF0F0F13);
-  static const surface = Color(0xFF1A1A22);
-  static const surfaceElevated = Color(0xFF22222E);
-  static const surfaceHighlight = Color(0xFF2A2A38);
+  static const background = Color(0xFFF5F6F8);
+  static const surface = Color(0xFFFFFFFF);
+  static const surfaceElevated = Color(0xFFF8F9FB);
+  static const surfaceHighlight = Color(0xFFE8EAF0);
 
-  // Brand — Orange Blossom Gold
-  static const primary = Color(0xFFD4A017);
-  static const primaryLight = Color(0xFFEDBE3F);
-  static const primaryDark = Color(0xFFA07A0E);
-  static const primaryContainer = Color(0xFF2E2410);
+  // Brand — Enterprise Blue
+  static const primary = Color(0xFF0052CC);
+  static const primaryLight = Color(0xFF2684FF);
+  static const primaryDark = Color(0xFF0747A6);
+  static const primaryContainer = Color(0xFFDEEBFF);
 
-  // Accent — Soft White
-  static const onPrimary = Color(0xFF1A1400);
-  static const onSurface = Color(0xFFEFEFEF);
-  static const onSurfaceMuted = Color(0xFF9090A8);
+  // Accent — Dark Charcoal
+  static const onPrimary = Color(0xFFFFFFFF);
+  static const onSurface = Color(0xFF172B4D);
+  static const onSurfaceMuted = Color(0xFF5E6C84);
 
   // Semantic
-  static const success = Color(0xFF2ECC71);
-  static const error = Color(0xFFE74C3C);
-  static const warning = Color(0xFFF39C12);
-  static const info = Color(0xFF3498DB);
+  static const success = Color(0xFF36B37E);
+  static const error = Color(0xFFFF5630);
+  static const warning = Color(0xFFFFAB00);
+  static const info = Color(0xFF00B8D9);
 
   // Divider
-  static const divider = Color(0xFF2E2E3E);
+  static const divider = Color(0xFFDFE1E6);
 
   // Sidebar
-  static const sidebarBg = Color(0xFF13131A);
-  static const sidebarActive = Color(0xFF2A2418);
-  static const sidebarBorder = Color(0xFF25252F);
+  static const sidebarBg = Color(0xFFFFFFFF);
+  static const sidebarActive = Color(0xFFDEEBFF);
+  static const sidebarBorder = Color(0xFFDFE1E6);
 }
